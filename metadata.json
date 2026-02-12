@@ -1,0 +1,11 @@
+{
+  "name": "Sentinel-Sync CRM",
+  "description": "A futuristic Revenue Protection System for the Indian SME and SaaS market, featuring Hinglish sentiment analysis, churn prediction, and AI digital twin role-playing.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "android": {
+    "packageName": "ai.sentinel.sync",
+    "themeColor": "#0f172a"
+  }
+}
