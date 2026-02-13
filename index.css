@@ -1,0 +1,15 @@
+
+/* Base styles to prevent 404 and provide utility resets */
+:root {
+  --background: 0 0% 3.9%;
+  --foreground: 0 0% 98%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
