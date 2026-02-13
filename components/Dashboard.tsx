@@ -101,7 +101,7 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
   };
 
   return (
-    <div className="space-y-6 md:space-y-8 pb-20">
+    <div className="space-y-6 md:space-y-8 pb-20 overflow-hidden">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h2 className="text-2xl md:text-4xl font-extrabold text-white tracking-tight">Operational Command</h2>
@@ -162,9 +162,9 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
         </div>
       )}
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 min-w-0">
         {stats.map((s, i) => (
-          <div key={i} className="bg-slate-900 border border-slate-800 p-6 rounded-3xl group hover:border-blue-500/30 transition-all min-w-0">
+          <div key={i} className="bg-slate-900 border border-slate-800 p-6 rounded-3xl group hover:border-blue-500/30 transition-all min-w-0 overflow-hidden">
             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2">{s.label}</p>
             <div className="flex items-end justify-between overflow-hidden">
               <h3 className="text-2xl md:text-3xl font-extrabold text-white leading-tight truncate">{s.value}</h3>
@@ -176,7 +176,7 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 min-w-0 overflow-hidden">
         <div className="lg:col-span-8 space-y-8 min-w-0">
           <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl relative overflow-hidden group min-h-[400px]">
             <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none text-6xl">📈</div>
@@ -204,7 +204,7 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
             </div>
           </div>
 
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl">
+          <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl min-w-0 overflow-hidden">
             <div className="flex items-center justify-between mb-8">
               <h4 className="text-base font-bold text-white flex items-center gap-2">
                 <span className="w-1.5 h-1.5 bg-rose-500 rounded-full"></span>
@@ -213,16 +213,16 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {clients.filter(c => c.healthScore < 50).slice(0, 4).map((client) => (
-                <div key={client.id} className="flex items-center justify-between p-4 bg-slate-950/40 rounded-2xl border border-slate-800/50 hover:border-slate-700 transition-all hover:translate-x-1">
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-1 h-10 rounded-full ${client.riskLevel === RiskLevel.CRITICAL ? 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]' : 'bg-amber-500'}`}></div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-100">{client.company}</p>
-                      <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">{client.name}</p>
+                <div key={client.id} className="flex items-center justify-between p-4 bg-slate-950/40 rounded-2xl border border-slate-800/50 hover:border-slate-700 transition-all hover:translate-x-1 overflow-hidden">
+                  <div className="flex items-center space-x-4 min-w-0">
+                    <div className={`w-1 h-10 rounded-full flex-shrink-0 ${client.riskLevel === RiskLevel.CRITICAL ? 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]' : 'bg-amber-500'}`}></div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-100 truncate">{client.company}</p>
+                      <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest truncate">{client.name}</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-[10px] text-slate-500 font-bold mb-1">₹{(client.mrr/1000).toFixed(0)}k MRR</p>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-[10px] text-slate-500 font-bold mb-1">₹{(client.mrr/1000).toFixed(0)}k</p>
                     <RiskBadge level={client.riskLevel} />
                   </div>
                 </div>
