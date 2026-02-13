@@ -152,7 +152,6 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
         </div>
       </header>
 
-      {/* Triggered Alerts Notification Panel */}
       {triggeredAlerts.length > 0 && (
         <div className="bg-rose-500/5 border border-rose-500/20 rounded-3xl p-6 animate-in slide-in-from-top-4 duration-500">
           <div className="flex items-center gap-2 mb-4">
@@ -179,14 +178,13 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
         </div>
       )}
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {stats.map((s, i) => (
-          <div key={i} className="bg-slate-900 border border-slate-800 p-6 rounded-3xl group hover:border-blue-500/30 transition-all">
+          <div key={i} className="bg-slate-900 border border-slate-800 p-6 rounded-3xl group hover:border-blue-500/30 transition-all min-w-0">
             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2">{s.label}</p>
-            <div className="flex items-end justify-between">
-              <h3 className="text-2xl md:text-3xl font-extrabold text-white leading-tight">{s.value}</h3>
-              <div className={`flex items-center text-xs font-bold ${s.color} bg-${s.color.split('-')[1]}-500/10 px-2 py-0.5 rounded-lg`}>
+            <div className="flex items-end justify-between overflow-hidden">
+              <h3 className="text-2xl md:text-3xl font-extrabold text-white leading-tight truncate">{s.value}</h3>
+              <div className={`flex items-center text-xs font-bold ${s.color} bg-${s.color.split('-')[1]}-500/10 px-2 py-0.5 rounded-lg ml-2`}>
                 {s.change}
               </div>
             </div>
@@ -194,18 +192,16 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
         ))}
       </div>
 
-      {/* Main Content Area */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Charts Section */}
-        <div className="lg:col-span-8 space-y-8">
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl relative overflow-hidden group">
+        <div className="lg:col-span-8 space-y-8 min-w-0">
+          <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl relative overflow-hidden group min-h-[400px]">
             <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none text-6xl">📈</div>
             <h4 className="text-base font-bold text-white mb-8 flex items-center gap-2">
               <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
               Revenue Health Analytics
             </h4>
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="h-72 w-full">
+              <ResponsiveContainer width="100%" height="100%" debounce={50}>
                 <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="colorRisk" x1="0" y1="0" x2="0" y2="1">
@@ -230,9 +226,6 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
                 <span className="w-1.5 h-1.5 bg-rose-500 rounded-full"></span>
                 Critical Watchlist
               </h4>
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-800/50 px-3 py-1 rounded-full">
-                {clients.filter(c => c.healthScore < 50).length} Escalations
-              </span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {clients.filter(c => c.healthScore < 50).slice(0, 4).map((client) => (
@@ -254,12 +247,11 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
           </div>
         </div>
 
-        {/* Sidebar widgets */}
-        <div className="lg:col-span-4 space-y-8">
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl">
+        <div className="lg:col-span-4 space-y-8 min-w-0">
+          <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl min-h-[300px]">
             <h4 className="text-base font-bold text-white mb-8">Risk Tier Distribution</h4>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%" debounce={50}>
                 <BarChart data={riskDistributionData}>
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10, fontWeight: 600}} />
                   <Bar dataKey="count" radius={[8, 8, 0, 0]}>
@@ -271,109 +263,8 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
               </ResponsiveContainer>
             </div>
           </div>
-
-          <div className="bg-gradient-to-br from-indigo-600/10 to-blue-600/10 border border-blue-500/20 p-6 rounded-3xl relative overflow-hidden group">
-            <h4 className="text-base font-bold text-white mb-4">Market Pulse</h4>
-            <p className="text-xs text-slate-400 leading-relaxed mb-6">
-              Indian EdTech sector seeing 15% churn volatility due to regulatory shifts in hybrid learning models.
-            </p>
-            <div className="space-y-3">
-              <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase">
-                <span>Volatility Index</span>
-                <span className="text-rose-400">High Risk</span>
-              </div>
-              <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                <div className="h-full bg-rose-500 w-[78%]"></div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
-
-      {/* Custom Alert Modal */}
-      {isAlertModalOpen && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-          <div className="bg-slate-900 border border-slate-800 rounded-[32px] w-full max-w-md p-8 shadow-2xl animate-in zoom-in-95 duration-300">
-            <h3 className="text-xl font-bold text-white mb-6">Create Revenue Alert</h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2 tracking-widest">Alert Name</label>
-                <input 
-                  type="text"
-                  placeholder="e.g. Low MRR Warning"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  value={newAlert.name}
-                  onChange={e => setNewAlert({...newAlert, name: e.target.value})}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2 tracking-widest">Type</label>
-                  <select 
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none"
-                    value={newAlert.type}
-                    onChange={e => setNewAlert({...newAlert, type: e.target.value as any})}
-                  >
-                    <option value="mrr_threshold">MRR Threshold</option>
-                    <option value="risk_level">Risk Level</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2 tracking-widest">Condition</label>
-                  <select 
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none"
-                    value={newAlert.condition}
-                    onChange={e => setNewAlert({...newAlert, condition: e.target.value as any})}
-                  >
-                    <option value="below">Below</option>
-                    <option value="above">Above</option>
-                    <option value="equals">Equals</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2 tracking-widest">Trigger Value</label>
-                {newAlert.type === 'risk_level' ? (
-                  <select 
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none"
-                    value={newAlert.value as string}
-                    onChange={e => setNewAlert({...newAlert, value: e.target.value as RiskLevel})}
-                  >
-                    <option value={RiskLevel.STABLE}>Stable</option>
-                    <option value={RiskLevel.COOLING}>Cooling</option>
-                    <option value={RiskLevel.CRITICAL}>Critical</option>
-                  </select>
-                ) : (
-                  <input 
-                    type="number"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    value={newAlert.value as number}
-                    onChange={e => setNewAlert({...newAlert, value: Number(e.target.value)})}
-                  />
-                )}
-              </div>
-            </div>
-
-            <div className="flex gap-3 mt-8">
-              <button 
-                onClick={() => setIsAlertModalOpen(false)}
-                className="flex-1 px-4 py-3 bg-slate-800 text-slate-300 font-bold rounded-xl hover:bg-slate-700 transition-all text-xs"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleAddAlert}
-                className="flex-1 px-4 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-500 transition-all text-xs"
-              >
-                Deploy Alert
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
