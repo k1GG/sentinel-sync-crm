@@ -3,29 +3,6 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { SentimentAnalysis, LogEntry, RiskLevel } from "../types";
 
 /**
- * Utility to check for API Key presence.
- * In many browser-based "no-build" environments, process.env is a polyfill.
- */
-const getApiKey = () => {
-  // Check common locations for the API key
-  const key = 
-    (typeof process !== 'undefined' && process.env && process.env.API_KEY) ||
-    (window as any).process?.env?.API_KEY ||
-    (window as any).API_KEY;
-  
-  if (!key || key === "undefined") {
-    console.error("[SENTINEL-SYNC] CRITICAL ERROR: API_KEY is not defined in the environment.");
-    console.debug("Current Context:", {
-      processEnv: typeof process !== 'undefined' ? process.env : 'undefined',
-      windowProcessEnv: (window as any).process?.env,
-      windowApiKey: !!(window as any).API_KEY
-    });
-    return null;
-  }
-  return key;
-};
-
-/**
  * Enhanced Utility to handle API calls with aggressive exponential backoff.
  */
 const callWithRetry = async <T>(apiCall: () => Promise<T>, retries = 5, delay = 3000): Promise<T> => {
@@ -34,17 +11,7 @@ const callWithRetry = async <T>(apiCall: () => Promise<T>, retries = 5, delay = 
   } catch (error: any) {
     const errorMsg = error?.message || "";
     const isRateLimit = errorMsg.includes('429') || error?.status === 429;
-    const isAuthError = 
-      errorMsg.includes('API Key') || 
-      error?.status === 401 || 
-      error?.status === 403 || 
-      errorMsg.includes('not found');
-
-    if (isAuthError) {
-      console.error("[SENTINEL-SYNC] Authentication/Key Failure. Verification of the API key is required in the deployment dashboard.");
-      throw new Error("AUTHENTICATION_REQUIRED");
-    }
-
+    
     if (retries > 0 && isRateLimit) {
       console.warn(`[SENTINEL-RETRY] Rate limit hit. Waiting ${delay}ms... (${retries} attempts left)`);
       await new Promise(resolve => setTimeout(resolve, delay));
@@ -54,11 +21,23 @@ const callWithRetry = async <T>(apiCall: () => Promise<T>, retries = 5, delay = 
   }
 };
 
+/**
+ * Validates the API key presence before initialization.
+ */
+const getValidatedApiKey = () => {
+  const key = process.env.API_KEY;
+  if (!key || key === "undefined") {
+    console.error("[SENTINEL-SYNC] CRITICAL: API_KEY is missing from process.env. Ensure your deployment host (Cloudflare/Netlify) is injecting this variable correctly into the client-side bundle.");
+    return null;
+  }
+  return key;
+};
+
 export const analyzeSentiment = async (logs: LogEntry[], companyName?: string): Promise<SentimentAnalysis> => {
   const logContext = logs.map(l => `[${l.timestamp}] ${l.sender}: ${l.message}`).join('\n');
   
   const fn = async () => {
-    const apiKey = getApiKey();
+    const apiKey = getValidatedApiKey();
     if (!apiKey) throw new Error("MISSING_API_KEY");
 
     const ai = new GoogleGenAI({ apiKey });
@@ -113,10 +92,10 @@ export const analyzeSentiment = async (logs: LogEntry[], companyName?: string): 
     return {
       healthScore: 50,
       riskClassification: RiskLevel.STABLE,
-      silentSignal: e.message === "AUTHENTICATION_REQUIRED" ? "API Key Invalid/Missing in Cloudflare." : "Deep scan unavailable.",
-      recoveryPlan: ["Manual check-in required"],
+      silentSignal: "Deep logic scan restricted. Verify API Key settings in dashboard.",
+      recoveryPlan: ["Immediate manual review recommended"],
       engagementDraft: "Checking in to ensure everything is running smoothly.",
-      executiveSummary: "Forensic scan failed due to environment variable issues.",
+      executiveSummary: "Forensic scan failed. This usually indicates the API_KEY environment variable is not reaching the browser.",
       industryContextSummary: "Standard Indian market volatility detected."
     };
   }
@@ -124,7 +103,7 @@ export const analyzeSentiment = async (logs: LogEntry[], companyName?: string): 
 
 export const analyzeExternalShocks = async (industry: string): Promise<any> => {
   const fn = async () => {
-    const apiKey = getApiKey();
+    const apiKey = getValidatedApiKey();
     if (!apiKey) throw new Error("MISSING_API_KEY");
 
     const ai = new GoogleGenAI({ apiKey });
@@ -168,7 +147,7 @@ export const analyzeExternalShocks = async (industry: string): Promise<any> => {
 
 export const generateBattlePlan = async (clientName: string, company: string, riskLevel: string): Promise<any> => {
   const fn = async () => {
-    const apiKey = getApiKey();
+    const apiKey = getValidatedApiKey();
     if (!apiKey) throw new Error("MISSING_API_KEY");
 
     const ai = new GoogleGenAI({ apiKey });
@@ -198,7 +177,7 @@ export const generateBattlePlan = async (clientName: string, company: string, ri
 
 export const generateRolePlayResponse = async (clientContext: string, userMessage: string): Promise<string> => {
   const fn = async () => {
-    const apiKey = getApiKey();
+    const apiKey = getValidatedApiKey();
     if (!apiKey) throw new Error("MISSING_API_KEY");
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
@@ -213,7 +192,7 @@ export const generateRolePlayResponse = async (clientContext: string, userMessag
 
 export const generateSupportResponse = async (history: { role: 'user' | 'model', text: string }[], userMessage: string, context?: string): Promise<string> => {
   const fn = async () => {
-    const apiKey = getApiKey();
+    const apiKey = getValidatedApiKey();
     if (!apiKey) throw new Error("MISSING_API_KEY");
     const ai = new GoogleGenAI({ apiKey });
     const chat = ai.chats.create({
