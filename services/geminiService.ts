@@ -4,12 +4,22 @@ import { SentimentAnalysis, LogEntry, RiskLevel } from "../types";
 
 /**
  * Utility to check for API Key presence.
+ * In many browser-based "no-build" environments, process.env is a polyfill.
  */
 const getApiKey = () => {
-  const key = process.env.API_KEY;
+  // Check common locations for the API key
+  const key = 
+    (typeof process !== 'undefined' && process.env && process.env.API_KEY) ||
+    (window as any).process?.env?.API_KEY ||
+    (window as any).API_KEY;
+  
   if (!key || key === "undefined") {
     console.error("[SENTINEL-SYNC] CRITICAL ERROR: API_KEY is not defined in the environment.");
-    console.error("Please ensure you have added the 'API_KEY' variable in your deployment dashboard.");
+    console.debug("Current Context:", {
+      processEnv: typeof process !== 'undefined' ? process.env : 'undefined',
+      windowProcessEnv: (window as any).process?.env,
+      windowApiKey: !!(window as any).API_KEY
+    });
     return null;
   }
   return key;
@@ -24,10 +34,14 @@ const callWithRetry = async <T>(apiCall: () => Promise<T>, retries = 5, delay = 
   } catch (error: any) {
     const errorMsg = error?.message || "";
     const isRateLimit = errorMsg.includes('429') || error?.status === 429;
-    const isAuthError = errorMsg.includes('API Key') || error?.status === 401 || error?.status === 403;
+    const isAuthError = 
+      errorMsg.includes('API Key') || 
+      error?.status === 401 || 
+      error?.status === 403 || 
+      errorMsg.includes('not found');
 
     if (isAuthError) {
-      console.error("[SENTINEL-SYNC] Authentication Failed. Check your API key in the host settings.");
+      console.error("[SENTINEL-SYNC] Authentication/Key Failure. Verification of the API key is required in the deployment dashboard.");
       throw new Error("AUTHENTICATION_REQUIRED");
     }
 
@@ -99,10 +113,10 @@ export const analyzeSentiment = async (logs: LogEntry[], companyName?: string): 
     return {
       healthScore: 50,
       riskClassification: RiskLevel.STABLE,
-      silentSignal: e.message === "AUTHENTICATION_REQUIRED" ? "API Authentication Failed. Check Dashboard settings." : "Deep scan unavailable.",
-      recoveryPlan: ["Immediate manual review recommended"],
+      silentSignal: e.message === "AUTHENTICATION_REQUIRED" ? "API Key Invalid/Missing in Cloudflare." : "Deep scan unavailable.",
+      recoveryPlan: ["Manual check-in required"],
       engagementDraft: "Checking in to ensure everything is running smoothly.",
-      executiveSummary: "Forensic scan failed. Please check system logs for API Key validity.",
+      executiveSummary: "Forensic scan failed due to environment variable issues.",
       industryContextSummary: "Standard Indian market volatility detected."
     };
   }
@@ -116,7 +130,7 @@ export const analyzeExternalShocks = async (industry: string): Promise<any> => {
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview", 
-      contents: `Search for new Indian government policies, GoI Gazettes, Ministry of Corporate Affairs (MCA) notifications released in the last 60 days affecting the "${industry}" sector in India.`,
+      contents: `Search for new Indian government policies released in the last 60 days affecting the "${industry}" sector in India.`,
       config: {
         tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
