@@ -1,15 +1,36 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { SentimentAnalysis, LogEntry, RiskLevel } from "../types";
 
 /**
+ * Utility to check for API Key presence.
+ */
+const getApiKey = () => {
+  const key = process.env.API_KEY;
+  if (!key || key === "undefined") {
+    console.error("[SENTINEL-SYNC] CRITICAL ERROR: API_KEY is not defined in the environment.");
+    console.error("Please ensure you have added the 'API_KEY' variable in your deployment dashboard.");
+    return null;
+  }
+  return key;
+};
+
+/**
  * Enhanced Utility to handle API calls with aggressive exponential backoff.
- * 429 errors are common in high-traffic or low-quota tiers.
  */
 const callWithRetry = async <T>(apiCall: () => Promise<T>, retries = 5, delay = 3000): Promise<T> => {
   try {
     return await apiCall();
   } catch (error: any) {
-    const isRateLimit = error?.message?.includes('429') || error?.status === 429;
+    const errorMsg = error?.message || "";
+    const isRateLimit = errorMsg.includes('429') || error?.status === 429;
+    const isAuthError = errorMsg.includes('API Key') || error?.status === 401 || error?.status === 403;
+
+    if (isAuthError) {
+      console.error("[SENTINEL-SYNC] Authentication Failed. Check your API key in the host settings.");
+      throw new Error("AUTHENTICATION_REQUIRED");
+    }
+
     if (retries > 0 && isRateLimit) {
       console.warn(`[SENTINEL-RETRY] Rate limit hit. Waiting ${delay}ms... (${retries} attempts left)`);
       await new Promise(resolve => setTimeout(resolve, delay));
@@ -23,7 +44,10 @@ export const analyzeSentiment = async (logs: LogEntry[], companyName?: string): 
   const logContext = logs.map(l => `[${l.timestamp}] ${l.sender}: ${l.message}`).join('\n');
   
   const fn = async () => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = getApiKey();
+    if (!apiKey) throw new Error("MISSING_API_KEY");
+
+    const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview", 
       contents: `Analyze logs for client "${companyName || 'the client'}".
@@ -70,15 +94,15 @@ export const analyzeSentiment = async (logs: LogEntry[], companyName?: string): 
 
   try {
     return await callWithRetry(fn);
-  } catch (e) {
+  } catch (e: any) {
     console.error("Sentiment analysis failure:", e);
     return {
       healthScore: 50,
       riskClassification: RiskLevel.STABLE,
-      silentSignal: "System load high. Deep market scan deferred.",
-      recoveryPlan: ["Immediate phone outreach recommended"],
+      silentSignal: e.message === "AUTHENTICATION_REQUIRED" ? "API Authentication Failed. Check Dashboard settings." : "Deep scan unavailable.",
+      recoveryPlan: ["Immediate manual review recommended"],
       engagementDraft: "Checking in to ensure everything is running smoothly.",
-      executiveSummary: "Forensic scan timed out. Manual review suggested.",
+      executiveSummary: "Forensic scan failed. Please check system logs for API Key validity.",
       industryContextSummary: "Standard Indian market volatility detected."
     };
   }
@@ -86,13 +110,13 @@ export const analyzeSentiment = async (logs: LogEntry[], companyName?: string): 
 
 export const analyzeExternalShocks = async (industry: string): Promise<any> => {
   const fn = async () => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    // Specifically targeting GoI Gazettes, MCA, and RBI notifications for compliance-linked churn
+    const apiKey = getApiKey();
+    if (!apiKey) throw new Error("MISSING_API_KEY");
+
+    const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview", 
-      contents: `Search for new Indian government policies, GoI Gazettes, Ministry of Corporate Affairs (MCA) notifications, GST Council updates, or RBI mandates released in the last 60 days affecting the "${industry}" sector. 
-      Analyze these for compliance-linked churn risks where SaaS founders/SMEs might face increased operational costs or technical debt. 
-      Focus on specific policy numbers or dates if available.`,
+      contents: `Search for new Indian government policies, GoI Gazettes, Ministry of Corporate Affairs (MCA) notifications released in the last 60 days affecting the "${industry}" sector in India.`,
       config: {
         tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
@@ -106,7 +130,7 @@ export const analyzeExternalShocks = async (industry: string): Promise<any> => {
                 properties: {
                   title: { type: Type.STRING },
                   source: { type: Type.STRING },
-                  impactScore: { type: Type.NUMBER, description: "1-10 risk of churn due to this policy" },
+                  impactScore: { type: Type.NUMBER },
                   summary: { type: Type.STRING },
                   complianceDeadline: { type: Type.STRING },
                   actionableTip: { type: Type.STRING }
@@ -124,18 +148,19 @@ export const analyzeExternalShocks = async (industry: string): Promise<any> => {
   try {
     return await callWithRetry(fn);
   } catch (e) {
-    console.error("Shock scan quota error:", e);
     return { shocks: [] };
   }
 };
 
 export const generateBattlePlan = async (clientName: string, company: string, riskLevel: string): Promise<any> => {
   const fn = async () => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = getApiKey();
+    if (!apiKey) throw new Error("MISSING_API_KEY");
+
+    const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: "gemini-3-pro-preview",
-      contents: `Tactical War-Plan for high-risk account. Include 'Revenue Swapping'. 
-      CLIENT: ${clientName} (${company}) Status: ${riskLevel}.`,
+      contents: `Tactical War-Plan for high-risk account. CLIENT: ${clientName} (${company}) Status: ${riskLevel}.`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -154,18 +179,14 @@ export const generateBattlePlan = async (clientName: string, company: string, ri
     });
     return JSON.parse(response.text || '{}');
   };
-
-  try {
-    return await callWithRetry(fn);
-  } catch (e) {
-    console.error("War room error:", e);
-    throw e;
-  }
+  return await callWithRetry(fn);
 };
 
 export const generateRolePlayResponse = async (clientContext: string, userMessage: string): Promise<string> => {
   const fn = async () => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = getApiKey();
+    if (!apiKey) throw new Error("MISSING_API_KEY");
+    const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Digital twin persona: ${clientContext}\nUSER: ${userMessage}`,
@@ -178,10 +199,12 @@ export const generateRolePlayResponse = async (clientContext: string, userMessag
 
 export const generateSupportResponse = async (history: { role: 'user' | 'model', text: string }[], userMessage: string, context?: string): Promise<string> => {
   const fn = async () => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = getApiKey();
+    if (!apiKey) throw new Error("MISSING_API_KEY");
+    const ai = new GoogleGenAI({ apiKey });
     const chat = ai.chats.create({
       model: 'gemini-3-flash-preview',
-      config: { systemInstruction: "Sentinel-Sync Assistant. High-level revenue protection expert. Focus Context: " + context },
+      config: { systemInstruction: "Sentinel-Sync Assistant. Focus Context: " + context },
     });
     const result = await chat.sendMessage({ message: userMessage });
     return result.text || "Communication error.";
