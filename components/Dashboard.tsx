@@ -61,22 +61,6 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
     });
   }, [alerts, clients]);
 
-  const handleAddAlert = () => {
-    if (!newAlert.name) return;
-    const alertToAdd: Alert = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: newAlert.name,
-      type: newAlert.type as any,
-      condition: newAlert.condition as any,
-      value: newAlert.type === 'risk_level' ? newAlert.value as RiskLevel : Number(newAlert.value),
-      active: true,
-      clientId: newAlert.clientId
-    };
-    setAlerts(prev => [...prev, alertToAdd]);
-    setIsAlertModalOpen(false);
-    setNewAlert({ name: '', type: 'mrr_threshold', condition: 'below', value: 0 });
-  };
-
   const handleExportCSV = () => {
     const headers = ['ID', 'Name', 'Company', 'MRR', 'Health', 'Risk', 'Industry', 'Last'];
     const rows = clients.map(c => [c.id, c.name, c.company, c.mrr, c.healthScore, c.riskLevel, c.industry, c.lastInteraction]);
@@ -200,8 +184,8 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
               <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
               Revenue Health Analytics
             </h4>
-            <div className="h-72 w-full">
-              <ResponsiveContainer width="100%" height="100%" debounce={50}>
+            <div className="h-72 w-full min-w-0">
+              <ResponsiveContainer width="100%" height="100%" minHeight={288} debounce={50}>
                 <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="colorRisk" x1="0" y1="0" x2="0" y2="1">
@@ -250,8 +234,8 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
         <div className="lg:col-span-4 space-y-8 min-w-0">
           <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl min-h-[300px]">
             <h4 className="text-base font-bold text-white mb-8">Risk Tier Distribution</h4>
-            <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%" debounce={50}>
+            <div className="h-64 w-full min-w-0">
+              <ResponsiveContainer width="100%" height="100%" minHeight={256} debounce={50}>
                 <BarChart data={riskDistributionData}>
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10, fontWeight: 600}} />
                   <Bar dataKey="count" radius={[8, 8, 0, 0]}>
