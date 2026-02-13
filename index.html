@@ -6,6 +6,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Sentinel-Sync CRM</title>
     
+    <script>
+      /**
+       * Polyfill process.env for browser environments.
+       * Required for @google/genai SDK compatibility in non-Node environments.
+       */
+      window.process = window.process || { env: {} };
+      
+      // Map potential global injections to the standard process.env.API_KEY location
+      // This helps when hosting on platforms like Cloudflare Pages or Netlify
+      const injectedKey = window.API_KEY || window.VITE_API_KEY || window.process.env.API_KEY;
+      if (injectedKey && injectedKey !== "undefined") {
+        window.process.env.API_KEY = injectedKey;
+      }
+    </script>
+
     <!-- PWA / Android Meta Tags -->
     <link rel="manifest" href="./manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
@@ -18,11 +33,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     
-    <script>
-      // Polyfill process.env for browser environments
-      window.process = window.process || { env: {} };
-    </script>
-
     <style>
         body {
             font-family: 'Inter', sans-serif;
