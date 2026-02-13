@@ -1,8 +1,5 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { SentimentAnalysis, LogEntry, RiskLevel } from "../types";
-
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 /**
  * Enhanced Utility to handle API calls with aggressive exponential backoff.
@@ -26,6 +23,7 @@ export const analyzeSentiment = async (logs: LogEntry[], companyName?: string): 
   const logContext = logs.map(l => `[${l.timestamp}] ${l.sender}: ${l.message}`).join('\n');
   
   const fn = async () => {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview", 
       contents: `Analyze logs for client "${companyName || 'the client'}".
@@ -88,10 +86,13 @@ export const analyzeSentiment = async (logs: LogEntry[], companyName?: string): 
 
 export const analyzeExternalShocks = async (industry: string): Promise<any> => {
   const fn = async () => {
-    // Using Flash-Lite for macro-scans to preserve Pro/Flash quota
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    // Specifically targeting GoI Gazettes, MCA, and RBI notifications for compliance-linked churn
     const response = await ai.models.generateContent({
-      model: "gemini-flash-lite-latest", 
-      contents: `Regulatory shifts, GST, or RBI mandates for "${industry}" in India (last 60 days). Focus on churn risk for SaaS.`,
+      model: "gemini-3-flash-preview", 
+      contents: `Search for new Indian government policies, GoI Gazettes, Ministry of Corporate Affairs (MCA) notifications, GST Council updates, or RBI mandates released in the last 60 days affecting the "${industry}" sector. 
+      Analyze these for compliance-linked churn risks where SaaS founders/SMEs might face increased operational costs or technical debt. 
+      Focus on specific policy numbers or dates if available.`,
       config: {
         tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
@@ -105,10 +106,12 @@ export const analyzeExternalShocks = async (industry: string): Promise<any> => {
                 properties: {
                   title: { type: Type.STRING },
                   source: { type: Type.STRING },
-                  impactScore: { type: Type.NUMBER },
+                  impactScore: { type: Type.NUMBER, description: "1-10 risk of churn due to this policy" },
                   summary: { type: Type.STRING },
+                  complianceDeadline: { type: Type.STRING },
                   actionableTip: { type: Type.STRING }
-                }
+                },
+                required: ["title", "source", "impactScore", "summary", "actionableTip"]
               }
             }
           }
@@ -128,6 +131,7 @@ export const analyzeExternalShocks = async (industry: string): Promise<any> => {
 
 export const generateBattlePlan = async (clientName: string, company: string, riskLevel: string): Promise<any> => {
   const fn = async () => {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: "gemini-3-pro-preview",
       contents: `Tactical War-Plan for high-risk account. Include 'Revenue Swapping'. 
@@ -161,6 +165,7 @@ export const generateBattlePlan = async (clientName: string, company: string, ri
 
 export const generateRolePlayResponse = async (clientContext: string, userMessage: string): Promise<string> => {
   const fn = async () => {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Digital twin persona: ${clientContext}\nUSER: ${userMessage}`,
@@ -173,9 +178,10 @@ export const generateRolePlayResponse = async (clientContext: string, userMessag
 
 export const generateSupportResponse = async (history: { role: 'user' | 'model', text: string }[], userMessage: string, context?: string): Promise<string> => {
   const fn = async () => {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const chat = ai.chats.create({
       model: 'gemini-3-flash-preview',
-      config: { systemInstruction: "Sentinel-Sync Assistant. High-level revenue protection expert." },
+      config: { systemInstruction: "Sentinel-Sync Assistant. High-level revenue protection expert. Focus Context: " + context },
     });
     const result = await chat.sendMessage({ message: userMessage });
     return result.text || "Communication error.";
