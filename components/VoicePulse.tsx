@@ -14,8 +14,14 @@ const VoicePulse: React.FC = () => {
   const sourcesRef = useRef(new Set<AudioBufferSourceNode>());
 
   const startPulse = async () => {
+    const apiKey = process.env.API_KEY;
+    if (!apiKey || apiKey === "undefined") {
+      alert("CRITICAL: API_KEY is missing. Please add 'API_KEY' to your deployment settings.");
+      return;
+    }
+
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey });
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       
       const inputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
