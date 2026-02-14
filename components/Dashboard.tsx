@@ -1,8 +1,7 @@
-
 import React, { useRef, useState, useMemo } from 'react';
 import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
-import { Client, RiskLevel, Alert } from '../types';
-import RiskBadge from './RiskBadge';
+import { Client, RiskLevel, Alert } from '../types.ts';
+import RiskBadge from './RiskBadge.tsx';
 
 interface DashboardProps {
   clients: Client[];
@@ -104,10 +103,10 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
     <div className="space-y-6 md:space-y-8 pb-20 overflow-hidden">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-2xl md:text-4xl font-extrabold text-white tracking-tight">Operational Command</h2>
+          <h2 className="text-2xl md:text-4xl font-extrabold text-white tracking-tight italic uppercase">Operational Command</h2>
           <p className="text-sm text-slate-400 mt-1 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            Real-time revenue signals live for India SaaS.
+            Real-time revenue signals live for India SaaS market.
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
@@ -137,7 +136,7 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
       </header>
 
       {triggeredAlerts.length > 0 && (
-        <div className="bg-rose-500/5 border border-rose-500/20 rounded-3xl p-6 animate-in slide-in-from-top-4 duration-500">
+        <div className="bg-rose-500/5 border border-rose-500/20 rounded-3xl p-6 animate-in slide-in-from-top-4 duration-500 shadow-2xl">
           <div className="flex items-center gap-2 mb-4">
             <span className="p-2 bg-rose-500/20 rounded-xl text-lg">⚠️</span>
             <h4 className="text-sm font-bold text-rose-500 uppercase tracking-widest">Active Violations</h4>
@@ -164,11 +163,11 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 min-w-0">
         {stats.map((s, i) => (
-          <div key={i} className="bg-slate-900 border border-slate-800 p-6 rounded-3xl group hover:border-blue-500/30 transition-all min-w-0 overflow-hidden">
+          <div key={i} className="bg-slate-900 border border-slate-800 p-6 rounded-3xl group hover:border-blue-500/30 transition-all min-w-0 overflow-hidden shadow-lg">
             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2">{s.label}</p>
             <div className="flex items-end justify-between overflow-hidden">
               <h3 className="text-2xl md:text-3xl font-extrabold text-white leading-tight truncate">{s.value}</h3>
-              <div className={`flex items-center text-xs font-bold ${s.color} bg-${s.color.split('-')[1]}-500/10 px-2 py-0.5 rounded-lg ml-2`}>
+              <div className={`flex items-center text-xs font-bold ${s.color} bg-slate-800/50 px-2 py-0.5 rounded-lg ml-2`}>
                 {s.change}
               </div>
             </div>
@@ -178,14 +177,14 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 min-w-0 overflow-hidden">
         <div className="lg:col-span-8 space-y-8 min-w-0">
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl relative overflow-hidden group min-h-[400px]">
-            <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none text-6xl">📈</div>
+          <div className="bg-slate-900 border border-slate-800 p-6 rounded-[2.5rem] relative overflow-hidden group min-h-[400px] shadow-2xl">
+            <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none text-8xl">📈</div>
             <h4 className="text-base font-bold text-white mb-8 flex items-center gap-2">
               <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
               Revenue Health Analytics
             </h4>
             <div className="h-72 w-full min-w-0">
-              <ResponsiveContainer width="100%" height="100%" minHeight={288} debounce={50}>
+              <ResponsiveContainer width="100%" height="100%" minHeight={288}>
                 <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="colorRisk" x1="0" y1="0" x2="0" y2="1">
@@ -204,7 +203,7 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
             </div>
           </div>
 
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl min-w-0 overflow-hidden">
+          <div className="bg-slate-900 border border-slate-800 p-6 rounded-[2.5rem] min-w-0 overflow-hidden shadow-2xl">
             <div className="flex items-center justify-between mb-8">
               <h4 className="text-base font-bold text-white flex items-center gap-2">
                 <span className="w-1.5 h-1.5 bg-rose-500 rounded-full"></span>
@@ -213,12 +212,12 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {clients.filter(c => c.healthScore < 50).slice(0, 4).map((client) => (
-                <div key={client.id} className="flex items-center justify-between p-4 bg-slate-950/40 rounded-2xl border border-slate-800/50 hover:border-slate-700 transition-all hover:translate-x-1 overflow-hidden">
+                <div key={client.id} className="flex items-center justify-between p-5 bg-slate-950/40 rounded-3xl border border-slate-800/50 hover:border-slate-700 transition-all hover:translate-x-1 overflow-hidden group">
                   <div className="flex items-center space-x-4 min-w-0">
-                    <div className={`w-1 h-10 rounded-full flex-shrink-0 ${client.riskLevel === RiskLevel.CRITICAL ? 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]' : 'bg-amber-500'}`}></div>
+                    <div className={`w-1 h-12 rounded-full flex-shrink-0 transition-all group-hover:scale-y-110 ${client.riskLevel === RiskLevel.CRITICAL ? 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]' : 'bg-amber-500'}`}></div>
                     <div className="min-w-0">
                       <p className="text-sm font-bold text-slate-100 truncate">{client.company}</p>
-                      <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest truncate">{client.name}</p>
+                      <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest truncate">{client.name}</p>
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
@@ -232,10 +231,10 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
         </div>
 
         <div className="lg:col-span-4 space-y-8 min-w-0">
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl min-h-[300px]">
+          <div className="bg-slate-900 border border-slate-800 p-8 rounded-[2.5rem] min-h-[300px] shadow-2xl">
             <h4 className="text-base font-bold text-white mb-8">Risk Tier Distribution</h4>
             <div className="h-64 w-full min-w-0">
-              <ResponsiveContainer width="100%" height="100%" minHeight={256} debounce={50}>
+              <ResponsiveContainer width="100%" height="100%" minHeight={256}>
                 <BarChart data={riskDistributionData}>
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10, fontWeight: 600}} />
                   <Bar dataKey="count" radius={[8, 8, 0, 0]}>
