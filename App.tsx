@@ -12,18 +12,18 @@ import VoicePulse from './components/VoicePulse';
 import FloatingAIChat from './components/FloatingAIChat';
 import { MOCK_CLIENTS } from './constants';
 import { Client } from './types';
-import Header from './path/to/Header.tsx'
-
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [clients, setClients] = useState<Client[]>(MOCK_CLIENTS);
   const [selectedClientId, setSelectedClientId] = useState<string>(MOCK_CLIENTS[0].id);
   
+  // Intelligence clearance state
   const [hasClearance, setHasClearance] = useState(
     !!process.env.API_KEY && process.env.API_KEY !== "undefined" && process.env.API_KEY !== ""
   );
 
+  // Monitor for external key injections (common in aistudio environments)
   useEffect(() => {
     const checkKey = () => {
       if (process.env.API_KEY && process.env.API_KEY !== "undefined" && process.env.API_KEY !== "") {
@@ -38,17 +38,20 @@ const App: React.FC = () => {
     if (window.aistudio?.openSelectKey) {
       try {
         await window.aistudio.openSelectKey();
+        // As per guidelines: Assume success immediately after opening dialog to handle race conditions
         setHasClearance(true);
       } catch (err) {
-        console.error("Authorization failed", err);
+        console.error("Authorization flow interrupted", err);
       }
     } else {
+      // Fallback for non-aistudio environments
       setHasClearance(true); 
     }
   };
 
   const activeClient = clients.find(c => c.id === selectedClientId) || clients[0];
 
+  // Global Clearance Guard
   if (!hasClearance) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
@@ -63,7 +66,7 @@ const App: React.FC = () => {
           <div className="space-y-4">
             <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic">Clearance Restricted</h1>
             <p className="text-slate-400 text-sm leading-relaxed max-w-sm mx-auto font-medium">
-              Sentinel-Sync's intelligence node is currently disconnected. Manual cryptographic link required.
+              Sentinel-Sync's intelligence node is currently disconnected. Manual cryptographic link to Gemini backbone is required.
             </p>
           </div>
 
@@ -75,9 +78,13 @@ const App: React.FC = () => {
               Link Intelligence Engine
               <span className="group-hover:translate-x-1 transition-transform text-lg">→</span>
             </button>
-            <p className="text-[10px] text-slate-500 leading-relaxed font-medium">
-              Visit <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-blue-400 font-bold underline">billing docs</a> for requirements.
-            </p>
+            <div className="pt-4 border-t border-slate-800/50">
+              <p className="text-[10px] text-slate-500 leading-relaxed font-medium">
+                Authorization happens via a secure bridge.
+                <br />
+                <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-blue-400 font-bold hover:text-blue-300 underline underline-offset-4 transition-colors">Review Billing Docs</a>
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -85,10 +92,12 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-950 text-slate-200">
+    <div className="flex min-h-screen bg-slate-950 text-slate-200 selection:bg-blue-500/20 font-sans">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      
       <div className="flex-1 flex flex-col min-h-screen relative overflow-x-hidden">
         <Header />
+
         <main className="flex-1 p-4 md:p-8 lg:p-10 max-w-7xl mx-auto w-full pb-24 md:pb-10">
           {activeTab === 'dashboard' && <Dashboard clients={clients} setClients={setClients} />}
           {activeTab === 'forecaster' && <Forecaster clients={clients} />}
@@ -97,18 +106,25 @@ const App: React.FC = () => {
           {activeTab === 'warroom' && <WarRoom clients={clients} />}
           {activeTab === 'roleplay' && <RolePlayLab clients={clients} selectedClientId={selectedClientId} setSelectedClientId={setSelectedClientId} />}
           {activeTab === 'settings' && (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 animate-in fade-in slide-in-from-bottom-5">
                <div className="w-20 h-20 bg-slate-900/50 rounded-3xl flex items-center justify-center mb-6 border border-slate-800 text-3xl shadow-xl">⚙️</div>
                <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-tighter italic">System Node Config</h2>
-               <button onClick={handleAuthorize} className="mt-10 px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] border border-slate-700">
-                 Re-Authorize Link
+               <p className="text-sm text-slate-400 max-w-md font-medium">Manage API bridges, webhook listeners, and intelligence authorization.</p>
+               <button 
+                 onClick={handleAuthorize}
+                 className="mt-10 px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all border border-slate-700 shadow-xl active:scale-95"
+               >
+                 Re-Authorize Intelligence Link
                </button>
             </div>
           )}
         </main>
+
         <Footer />
       </div>
+
       <MobileNav activeTab={activeTab} setActiveTab={setActiveTab} />
+      
       <FloatingAIChat activeClient={activeClient} />
     </div>
   );
