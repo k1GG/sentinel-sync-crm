@@ -21,26 +21,12 @@ const callWithRetry = async <T>(apiCall: () => Promise<T>, retries = 5, delay = 
   }
 };
 
-/**
- * Validates the API key presence before initialization.
- */
-const getValidatedApiKey = () => {
-  const key = process.env.API_KEY;
-  if (!key || key === "undefined") {
-    console.error("[SENTINEL-SYNC] CRITICAL: API_KEY is missing from process.env. Ensure your deployment host (Cloudflare/Netlify) is injecting this variable correctly into the client-side bundle.");
-    return null;
-  }
-  return key;
-};
-
 export const analyzeSentiment = async (logs: LogEntry[], companyName?: string): Promise<SentimentAnalysis> => {
   const logContext = logs.map(l => `[${l.timestamp}] ${l.sender}: ${l.message}`).join('\n');
   
   const fn = async () => {
-    const apiKey = getValidatedApiKey();
-    if (!apiKey) throw new Error("MISSING_API_KEY");
-
-    const ai = new GoogleGenAI({ apiKey });
+    // ALWAYS initialize the client inside the function to capture the latest process.env.API_KEY
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview", 
       contents: `Analyze logs for client "${companyName || 'the client'}".
@@ -92,10 +78,10 @@ export const analyzeSentiment = async (logs: LogEntry[], companyName?: string): 
     return {
       healthScore: 50,
       riskClassification: RiskLevel.STABLE,
-      silentSignal: "Deep logic scan restricted. Verify API Key settings in dashboard.",
+      silentSignal: "Clearance restricted. Check Secure Link status.",
       recoveryPlan: ["Immediate manual review recommended"],
       engagementDraft: "Checking in to ensure everything is running smoothly.",
-      executiveSummary: "Forensic scan failed. This usually indicates the API_KEY environment variable is not reaching the browser.",
+      executiveSummary: "Forensic scan failed. Please re-authorize the API engine in Settings.",
       industryContextSummary: "Standard Indian market volatility detected."
     };
   }
@@ -103,10 +89,7 @@ export const analyzeSentiment = async (logs: LogEntry[], companyName?: string): 
 
 export const analyzeExternalShocks = async (industry: string): Promise<any> => {
   const fn = async () => {
-    const apiKey = getValidatedApiKey();
-    if (!apiKey) throw new Error("MISSING_API_KEY");
-
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview", 
       contents: `Search for new Indian government policies released in the last 60 days affecting the "${industry}" sector in India.`,
@@ -147,10 +130,7 @@ export const analyzeExternalShocks = async (industry: string): Promise<any> => {
 
 export const generateBattlePlan = async (clientName: string, company: string, riskLevel: string): Promise<any> => {
   const fn = async () => {
-    const apiKey = getValidatedApiKey();
-    if (!apiKey) throw new Error("MISSING_API_KEY");
-
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: "gemini-3-pro-preview",
       contents: `Tactical War-Plan for high-risk account. CLIENT: ${clientName} (${company}) Status: ${riskLevel}.`,
@@ -177,9 +157,7 @@ export const generateBattlePlan = async (clientName: string, company: string, ri
 
 export const generateRolePlayResponse = async (clientContext: string, userMessage: string): Promise<string> => {
   const fn = async () => {
-    const apiKey = getValidatedApiKey();
-    if (!apiKey) throw new Error("MISSING_API_KEY");
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Digital twin persona: ${clientContext}\nUSER: ${userMessage}`,
@@ -192,9 +170,7 @@ export const generateRolePlayResponse = async (clientContext: string, userMessag
 
 export const generateSupportResponse = async (history: { role: 'user' | 'model', text: string }[], userMessage: string, context?: string): Promise<string> => {
   const fn = async () => {
-    const apiKey = getValidatedApiKey();
-    if (!apiKey) throw new Error("MISSING_API_KEY");
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const chat = ai.chats.create({
       model: 'gemini-3-flash-preview',
       config: { systemInstruction: "Sentinel-Sync Assistant. Focus Context: " + context },
