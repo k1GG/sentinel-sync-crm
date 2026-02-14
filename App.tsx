@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import Sidebar from './components/Sidebar';
-import Header from './components/Header';
-import Footer from './components/Footer';
-import MobileNav from './components/MobileNav';
-import Dashboard from './components/Dashboard';
-import RevenueGuard from './components/RevenueGuard';
-import RolePlayLab from './components/RolePlayLab';
-import WarRoom from './components/WarRoom';
-import Forecaster from './components/Forecaster';
-import VoicePulse from './components/VoicePulse';
-import FloatingAIChat from './components/FloatingAIChat';
-import { MOCK_CLIENTS } from './constants';
-import { Client } from './types';
+import Sidebar from './components/Sidebar.tsx';
+import Header from './components/Header.tsx';
+import Footer from './components/Footer.tsx';
+import MobileNav from './components/MobileNav.tsx';
+import Dashboard from './components/Dashboard.tsx';
+import RevenueGuard from './components/RevenueGuard.tsx';
+import RolePlayLab from './components/RolePlayLab.tsx';
+import WarRoom from './components/WarRoom.tsx';
+import Forecaster from './components/Forecaster.tsx';
+import VoicePulse from './components/VoicePulse.tsx';
+import FloatingAIChat from './components/FloatingAIChat.tsx';
+import { MOCK_CLIENTS } from './constants.tsx';
+import { Client } from './types.ts';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -44,7 +44,7 @@ const App: React.FC = () => {
         console.error("Authorization failed", err);
       }
     } else {
-      console.warn("API Key Selector not available. Using process.env defaults.");
+      console.warn("API Key Selector not available. System defaulting to manual environment.");
       setHasClearance(true); 
     }
   };
@@ -95,7 +95,7 @@ const App: React.FC = () => {
               <p className="text-[10px] text-slate-500 leading-relaxed font-medium">
                 Authorization happens in an isolated secure bridge. Sentinel-Sync does not store or transmit your raw credentials.
                 <br />
-                <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline underline-offset-4 mt-2 inline-block transition-colors">Review Billing Docs</a>
+                <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline underline-offset-4 mt-2 inline-block transition-colors font-bold">Review Billing Docs</a>
               </p>
             </div>
           </div>
