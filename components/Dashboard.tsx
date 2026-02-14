@@ -1,7 +1,7 @@
 import React, { useRef, useState, useMemo } from 'react';
 import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
-import { Client, RiskLevel, Alert } from '../types.ts';
-import RiskBadge from './RiskBadge.tsx';
+import { Client, RiskLevel, Alert } from '../types';
+import RiskBadge from './RiskBadge';
 
 interface DashboardProps {
   clients: Client[];
@@ -15,12 +15,6 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
     { id: '2', name: 'Risk Escalation Monitor', type: 'risk_level', condition: 'equals', value: RiskLevel.CRITICAL, active: true }
   ]);
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
-  const [newAlert, setNewAlert] = useState<Partial<Alert>>({ 
-    name: '', 
-    type: 'mrr_threshold', 
-    condition: 'below', 
-    value: 0 
-  });
 
   const stats = useMemo(() => [
     { label: 'At Risk', value: `₹${(clients.filter(c => c.healthScore < 50).reduce((acc, c) => acc + c.mrr, 0) / 100000).toFixed(1)}L`, change: '+12%', color: 'text-rose-500' },
@@ -46,7 +40,6 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
       if (!alert.active) return false;
       return clients.some(client => {
         if (alert.clientId && client.id !== alert.clientId) return false;
-        
         if (alert.type === 'mrr_threshold') {
           const val = alert.value as number;
           if (alert.condition === 'below') return client.mrr < val;
@@ -111,24 +104,15 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
         </div>
         <div className="flex flex-wrap gap-3">
           <input type="file" ref={fileInputRef} onChange={handleImportCSV} accept=".csv" className="hidden" />
-          <button
-            onClick={() => setIsAlertModalOpen(true)}
-            className="flex items-center space-x-2 px-4 py-2.5 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 rounded-xl border border-indigo-600/30 transition-all text-xs font-bold active:scale-95"
-          >
+          <button onClick={() => setIsAlertModalOpen(true)} className="flex items-center space-x-2 px-4 py-2.5 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 rounded-xl border border-indigo-600/30 transition-all text-xs font-bold active:scale-95">
             <span className="text-lg">🔔</span>
             <span>Configure Alerts</span>
           </button>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center space-x-2 px-4 py-2.5 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 rounded-xl border border-blue-600/30 transition-all text-xs font-bold active:scale-95"
-          >
+          <button onClick={() => fileInputRef.current?.click()} className="flex items-center space-x-2 px-4 py-2.5 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 rounded-xl border border-blue-600/30 transition-all text-xs font-bold active:scale-95">
             <span className="text-lg">⊕</span>
             <span>Import</span>
           </button>
-          <button
-            onClick={handleExportCSV}
-            className="flex items-center space-x-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl border border-slate-700 transition-all text-xs font-bold active:scale-95"
-          >
+          <button onClick={handleExportCSV} className="flex items-center space-x-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl border border-slate-700 transition-all text-xs font-bold active:scale-95">
             <span className="text-lg">↓</span>
             <span>Export</span>
           </button>
@@ -136,11 +120,7 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
       </header>
 
       {triggeredAlerts.length > 0 && (
-        <div className="bg-rose-500/5 border border-rose-500/20 rounded-3xl p-6 animate-in slide-in-from-top-4 duration-500 shadow-2xl">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="p-2 bg-rose-500/20 rounded-xl text-lg">⚠️</span>
-            <h4 className="text-sm font-bold text-rose-500 uppercase tracking-widest">Active Violations</h4>
-          </div>
+        <div className="bg-rose-500/5 border border-rose-500/20 rounded-3xl p-6 shadow-2xl">
           <div className="flex flex-wrap gap-3">
             {triggeredAlerts.map(alert => (
               <div key={alert.id} className="bg-slate-900 border border-rose-500/30 px-4 py-3 rounded-2xl flex items-center gap-4 shadow-xl">
@@ -148,11 +128,7 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
                   <p className="text-[10px] font-bold text-rose-400 uppercase tracking-tighter">Triggered</p>
                   <p className="text-sm font-bold text-white">{alert.name}</p>
                 </div>
-                <div className="h-8 w-[1px] bg-slate-800"></div>
-                <button 
-                  onClick={() => setAlerts(prev => prev.map(a => a.id === alert.id ? {...a, active: false} : a))}
-                  className="text-[10px] font-bold text-slate-400 hover:text-white uppercase"
-                >
+                <button onClick={() => setAlerts(prev => prev.map(a => a.id === alert.id ? {...a, active: false} : a))} className="text-[10px] font-bold text-slate-400 hover:text-white uppercase">
                   Dismiss
                 </button>
               </div>
@@ -163,7 +139,7 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 min-w-0">
         {stats.map((s, i) => (
-          <div key={i} className="bg-slate-900 border border-slate-800 p-6 rounded-3xl group hover:border-blue-500/30 transition-all min-w-0 overflow-hidden shadow-lg">
+          <div key={i} className="bg-slate-900 border border-slate-800 p-6 rounded-3xl group min-w-0 overflow-hidden shadow-lg">
             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2">{s.label}</p>
             <div className="flex items-end justify-between overflow-hidden">
               <h3 className="text-2xl md:text-3xl font-extrabold text-white leading-tight truncate">{s.value}</h3>
@@ -178,7 +154,6 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 min-w-0 overflow-hidden">
         <div className="lg:col-span-8 space-y-8 min-w-0">
           <div className="bg-slate-900 border border-slate-800 p-6 rounded-[2.5rem] relative overflow-hidden group min-h-[400px] shadow-2xl">
-            <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none text-8xl">📈</div>
             <h4 className="text-base font-bold text-white mb-8 flex items-center gap-2">
               <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
               Revenue Health Analytics
@@ -186,50 +161,14 @@ const Dashboard: React.FC<DashboardProps> = ({ clients, setClients }) => {
             <div className="h-72 w-full min-w-0">
               <ResponsiveContainer width="100%" height="100%" minHeight={288}>
                 <AreaChart data={chartData}>
-                  <defs>
-                    <linearGradient id="colorRisk" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#f43f5e" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10, fontWeight: 600}} dy={10} />
-                  <Tooltip 
-                    contentStyle={{backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '16px', fontSize: '11px', border: '1px solid rgba(255,255,255,0.1)'}}
-                    itemStyle={{color: '#f8fafc', fontWeight: 'bold'}}
-                  />
-                  <Area type="monotone" dataKey="risk" stroke="#f43f5e" strokeWidth={3} fillOpacity={1} fill="url(#colorRisk)" />
+                  <Tooltip contentStyle={{backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '16px', fontSize: '11px'}} />
+                  <Area type="monotone" dataKey="risk" stroke="#f43f5e" strokeWidth={3} fill="#f43f5e33" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </div>
-
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-[2.5rem] min-w-0 overflow-hidden shadow-2xl">
-            <div className="flex items-center justify-between mb-8">
-              <h4 className="text-base font-bold text-white flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-rose-500 rounded-full"></span>
-                Critical Watchlist
-              </h4>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {clients.filter(c => c.healthScore < 50).slice(0, 4).map((client) => (
-                <div key={client.id} className="flex items-center justify-between p-5 bg-slate-950/40 rounded-3xl border border-slate-800/50 hover:border-slate-700 transition-all hover:translate-x-1 overflow-hidden group">
-                  <div className="flex items-center space-x-4 min-w-0">
-                    <div className={`w-1 h-12 rounded-full flex-shrink-0 transition-all group-hover:scale-y-110 ${client.riskLevel === RiskLevel.CRITICAL ? 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]' : 'bg-amber-500'}`}></div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-slate-100 truncate">{client.company}</p>
-                      <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest truncate">{client.name}</p>
-                    </div>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-[10px] text-slate-500 font-bold mb-1">₹{(client.mrr/1000).toFixed(0)}k</p>
-                    <RiskBadge level={client.riskLevel} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
-
         <div className="lg:col-span-4 space-y-8 min-w-0">
           <div className="bg-slate-900 border border-slate-800 p-8 rounded-[2.5rem] min-h-[300px] shadow-2xl">
             <h4 className="text-base font-bold text-white mb-8">Risk Tier Distribution</h4>
