@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -11,73 +10,94 @@ import WarRoom from './components/WarRoom';
 import Forecaster from './components/Forecaster';
 import VoicePulse from './components/VoicePulse';
 import FloatingAIChat from './components/FloatingAIChat';
-import { MOCK_CLIENTS } from './constants.tsx';
+import { MOCK_CLIENTS } from './constants';
 import { Client } from './types';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [clients, setClients] = useState<Client[]>(MOCK_CLIENTS);
   const [selectedClientId, setSelectedClientId] = useState<string>(MOCK_CLIENTS[0].id);
-  const [hasClearance, setHasClearance] = useState(!!process.env.API_KEY && process.env.API_KEY !== "undefined");
+  
+  // Check if API key is already present in process.env
+  const [hasClearance, setHasClearance] = useState(
+    !!process.env.API_KEY && process.env.API_KEY !== "undefined" && process.env.API_KEY !== ""
+  );
 
+  // Periodic check if key selection happened elsewhere
   useEffect(() => {
-    // Re-check clearance if the environment variable updates
-    if (process.env.API_KEY && process.env.API_KEY !== "undefined") {
-      setHasClearance(true);
-    }
+    const checkKey = () => {
+      if (process.env.API_KEY && process.env.API_KEY !== "undefined" && process.env.API_KEY !== "") {
+        setHasClearance(true);
+      }
+    };
+    const interval = setInterval(checkKey, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleAuthorize = async () => {
     if (window.aistudio?.openSelectKey) {
-      await window.aistudio.openSelectKey();
-      // Per guidelines, assume success and proceed to the app
-      setHasClearance(true);
+      try {
+        await window.aistudio.openSelectKey();
+        // Assume success as per guidelines to avoid race condition
+        setHasClearance(true);
+      } catch (err) {
+        console.error("Authorization failed", err);
+      }
     } else {
-      alert("API Key Selector not available in this environment. Ensure you are running in the correct AI Studio context.");
+      console.warn("API Key Selector not available. Using process.env defaults.");
+      setHasClearance(true); 
     }
   };
 
   const activeClient = clients.find(c => c.id === selectedClientId) || clients[0];
 
+  // Security Clearance Screen
   if (!hasClearance) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
-        <div className="max-w-md w-full space-y-8 animate-in fade-in zoom-in duration-500">
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center selection:bg-blue-500/30">
+        <div className="max-w-md w-full space-y-10 animate-in fade-in zoom-in duration-700">
           <div className="relative">
-            <div className="w-24 h-24 bg-blue-600/20 rounded-[2rem] border border-blue-500/30 flex items-center justify-center mx-auto mb-8 relative z-10">
-              <span className="text-4xl">🔐</span>
+            <div className="w-28 h-28 bg-blue-600/10 rounded-[2.5rem] border border-blue-500/30 flex items-center justify-center mx-auto mb-8 relative z-10 shadow-[0_0_50px_rgba(37,99,235,0.15)]">
+              <span className="text-5xl">🔒</span>
             </div>
-            <div className="absolute inset-0 bg-blue-500/10 blur-3xl rounded-full scale-150 opacity-50"></div>
+            <div className="absolute inset-0 bg-blue-500/20 blur-[80px] rounded-full scale-150 opacity-40"></div>
           </div>
           
           <div className="space-y-4">
-            <h1 className="text-3xl font-black text-white tracking-tighter uppercase">Clearance Required</h1>
-            <p className="text-slate-400 text-sm leading-relaxed">
-              Sentinel-Sync's intelligence engine is currently offline. Your deployment environment requires a manual authorization link to access the Gemini API.
+            <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic">Clearance Restricted</h1>
+            <p className="text-slate-400 text-sm leading-relaxed max-w-sm mx-auto font-medium">
+              Sentinel-Sync's intelligence node is currently disconnected from the Gemini backbone. Manual cryptographic link required.
             </p>
           </div>
 
-          <div className="p-6 bg-slate-900/50 border border-slate-800 rounded-3xl space-y-6">
+          <div className="p-8 bg-slate-900/40 backdrop-blur-xl border border-slate-800 rounded-[3rem] space-y-8 shadow-2xl relative">
+            <div className="absolute top-0 right-10 -translate-y-1/2">
+               <span className="px-3 py-1 bg-slate-800 border border-slate-700 rounded-full text-[9px] font-black text-slate-500 tracking-[0.3em] uppercase">Security Protocol v4.2</span>
+            </div>
+
             <div className="space-y-2">
-              <p className="text-[10px] font-bold text-blue-500 uppercase tracking-[0.2em]">Protocol Status</p>
-              <div className="flex items-center justify-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
-                <span className="text-xs font-mono text-slate-300">API_KEY_UNDEFINED</span>
+              <p className="text-[10px] font-bold text-blue-500 uppercase tracking-[0.2em]">Diagnostic Status</p>
+              <div className="flex items-center justify-center gap-3 bg-slate-950/50 py-3 rounded-2xl border border-slate-800/50">
+                <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shadow-[0_0_10px_rgba(244,63,94,0.5)]"></span>
+                <span className="text-xs font-mono text-slate-300">API_KEY_NULL_EXCEPTION</span>
               </div>
             </div>
             
             <button 
               onClick={handleAuthorize}
-              className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-900/40 transition-all active:scale-95 flex items-center justify-center gap-3"
+              className="group w-full py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-[0_20px_40px_rgba(37,99,235,0.3)] transition-all active:scale-95 flex items-center justify-center gap-4 border border-blue-400/20"
             >
-              Authorize Intelligence Engine
-              <span>→</span>
+              Link Intelligence Engine
+              <span className="group-hover:translate-x-1 transition-transform text-lg">→</span>
             </button>
             
-            <p className="text-[10px] text-slate-500 leading-relaxed italic">
-              Authorization happens locally. Your key is never stored on our servers. 
-              <br />Visit <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" className="text-blue-400 underline ml-1">billing docs</a> for requirements.
-            </p>
+            <div className="pt-4 border-t border-slate-800/50">
+              <p className="text-[10px] text-slate-500 leading-relaxed font-medium">
+                Authorization happens in an isolated secure bridge. Sentinel-Sync does not store or transmit your raw credentials.
+                <br />
+                <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline underline-offset-4 mt-2 inline-block transition-colors">Review Billing Docs</a>
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -85,7 +105,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-950 text-slate-200">
+    <div className="flex min-h-screen bg-slate-950 text-slate-200 selection:bg-blue-500/20">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       
       <div className="flex-1 flex flex-col min-h-screen relative overflow-x-hidden">
@@ -99,15 +119,15 @@ const App: React.FC = () => {
           {activeTab === 'warroom' && <WarRoom clients={clients} />}
           {activeTab === 'roleplay' && <RolePlayLab clients={clients} selectedClientId={selectedClientId} setSelectedClientId={setSelectedClientId} />}
           {activeTab === 'settings' && (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-               <div className="w-16 h-16 md:w-20 md:h-20 bg-slate-900 rounded-3xl flex items-center justify-center mb-6 border border-slate-800 text-2xl">⚙️</div>
-               <h2 className="text-xl md:text-2xl font-bold text-white mb-2">System Configuration</h2>
-               <p className="text-sm md:text-base text-slate-400 max-w-md">Connect your API hooks to WhatsApp, Gmail, and Salesforce.</p>
+            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 animate-in fade-in slide-in-from-bottom-5">
+               <div className="w-20 h-20 bg-slate-900/50 rounded-3xl flex items-center justify-center mb-6 border border-slate-800 text-3xl shadow-xl">⚙️</div>
+               <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-tighter italic">System Node Config</h2>
+               <p className="text-sm text-slate-400 max-w-md font-medium">Manage API bridges, webhook listeners, and intelligence authorization.</p>
                <button 
                  onClick={handleAuthorize}
-                 className="mt-8 text-xs font-bold text-blue-500 hover:text-blue-400 uppercase tracking-widest"
+                 className="mt-10 px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all border border-slate-700 shadow-xl active:scale-95"
                >
-                 Re-Authorize API Engine
+                 Re-Authorize Intelligence Link
                </button>
             </div>
           )}
