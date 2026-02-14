@@ -1,9 +1,8 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { SentimentAnalysis, LogEntry, RiskLevel } from "../types";
 
 /**
- * Enhanced Utility to handle API calls with aggressive exponential backoff.
+ * Enhanced Utility to handle API calls with exponential backoff.
  */
 const callWithRetry = async <T>(apiCall: () => Promise<T>, retries = 5, delay = 3000): Promise<T> => {
   try {
@@ -21,12 +20,16 @@ const callWithRetry = async <T>(apiCall: () => Promise<T>, retries = 5, delay = 
   }
 };
 
+const getAIClient = () => {
+  const apiKey = process.env.API_KEY || "";
+  return new GoogleGenAI({ apiKey });
+};
+
 export const analyzeSentiment = async (logs: LogEntry[], companyName?: string): Promise<SentimentAnalysis> => {
   const logContext = logs.map(l => `[${l.timestamp}] ${l.sender}: ${l.message}`).join('\n');
   
   const fn = async () => {
-    // ALWAYS initialize the client inside the function to capture the latest process.env.API_KEY
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getAIClient();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview", 
       contents: `Analyze logs for client "${companyName || 'the client'}".
@@ -68,7 +71,13 @@ export const analyzeSentiment = async (logs: LogEntry[], companyName?: string): 
         }
       }
     });
-    return JSON.parse(response.text || '{}');
+    
+    try {
+      return JSON.parse(response.text || '{}');
+    } catch (e) {
+      console.error("Failed to parse AI response as JSON", response.text);
+      throw new Error("Invalid intelligence response format.");
+    }
   };
 
   try {
@@ -89,10 +98,10 @@ export const analyzeSentiment = async (logs: LogEntry[], companyName?: string): 
 
 export const analyzeExternalShocks = async (industry: string): Promise<any> => {
   const fn = async () => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getAIClient();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview", 
-      contents: `Search for new Indian government policies released in the last 60 days affecting the "${industry}" sector in India.`,
+      contents: `Search for new Indian government policies released in the last 60 days affecting the "${industry}" sector in India. Output as JSON.`,
       config: {
         tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
@@ -130,7 +139,7 @@ export const analyzeExternalShocks = async (industry: string): Promise<any> => {
 
 export const generateBattlePlan = async (clientName: string, company: string, riskLevel: string): Promise<any> => {
   const fn = async () => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getAIClient();
     const response = await ai.models.generateContent({
       model: "gemini-3-pro-preview",
       contents: `Tactical War-Plan for high-risk account. CLIENT: ${clientName} (${company}) Status: ${riskLevel}.`,
@@ -157,26 +166,26 @@ export const generateBattlePlan = async (clientName: string, company: string, ri
 
 export const generateRolePlayResponse = async (clientContext: string, userMessage: string): Promise<string> => {
   const fn = async () => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getAIClient();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Digital twin persona: ${clientContext}\nUSER: ${userMessage}`,
       config: { temperature: 0.9 }
     });
-    return response.text || "No output.";
+    return response.text || "No output generated.";
   };
   return await callWithRetry(fn);
 };
 
 export const generateSupportResponse = async (history: { role: 'user' | 'model', text: string }[], userMessage: string, context?: string): Promise<string> => {
   const fn = async () => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getAIClient();
     const chat = ai.chats.create({
       model: 'gemini-3-flash-preview',
-      config: { systemInstruction: "Sentinel-Sync Assistant. Focus Context: " + context },
+      config: { systemInstruction: "You are the Sentinel-Sync Assistant. High-level CRM support for Indian SMEs. Focus Context: " + context },
     });
     const result = await chat.sendMessage({ message: userMessage });
-    return result.text || "Communication error.";
+    return result.text || "Communication bridge failure.";
   };
   return await callWithRetry(fn);
 };
