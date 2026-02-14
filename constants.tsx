@@ -1,5 +1,4 @@
-import React from 'react';
-import { Client, RiskLevel, LogEntry } from './types.ts';
+import { Client, RiskLevel, LogEntry } from './types';
 
 export const MOCK_CLIENTS: Client[] = [
   {
