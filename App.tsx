@@ -12,7 +12,10 @@ import FloatingAIChat from './components/FloatingAIChat';
 import { MOCK_CLIENTS } from './constants';
 import { Client } from './types';
 
-// Inlined Header component to resolve potential module resolution issues in the build environment
+/**
+ * Inlined Header component to prevent "Could not resolve" build errors.
+ * This component handles the top navigation bar and system status indicators.
+ */
 const Header: React.FC = () => {
   return (
     <header className="sticky top-0 z-40 w-full bg-slate-950/80 backdrop-blur-md border-b border-slate-800 px-6 py-4 flex items-center justify-between">
@@ -52,12 +55,12 @@ const App: React.FC = () => {
   const [clients, setClients] = useState<Client[]>(MOCK_CLIENTS);
   const [selectedClientId, setSelectedClientId] = useState<string>(MOCK_CLIENTS[0].id);
   
-  // Intelligence clearance state
+  // Check for API key in the environment
   const [hasClearance, setHasClearance] = useState(
     !!process.env.API_KEY && process.env.API_KEY !== "undefined" && process.env.API_KEY !== ""
   );
 
-  // Monitor for external key injections (common in aistudio environments)
+  // Poll for API key injection which sometimes happens after initial load in some environments
   useEffect(() => {
     const checkKey = () => {
       if (process.env.API_KEY && process.env.API_KEY !== "undefined" && process.env.API_KEY !== "") {
@@ -72,23 +75,21 @@ const App: React.FC = () => {
     if (window.aistudio?.openSelectKey) {
       try {
         await window.aistudio.openSelectKey();
-        // As per guidelines: Assume success immediately after opening dialog to handle race conditions
         setHasClearance(true);
       } catch (err) {
-        console.error("Authorization flow interrupted", err);
+        console.error("Authorization flow was interrupted.", err);
       }
     } else {
-      // Fallback for non-aistudio environments
       setHasClearance(true); 
     }
   };
 
   const activeClient = clients.find(c => c.id === selectedClientId) || clients[0];
 
-  // Global Clearance Guard
+  // Global Authorization Gate
   if (!hasClearance) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center font-sans">
         <div className="max-w-md w-full space-y-10 animate-in fade-in zoom-in duration-700">
           <div className="relative">
             <div className="w-28 h-28 bg-blue-600/10 rounded-[2.5rem] border border-blue-500/30 flex items-center justify-center mx-auto mb-8 relative z-10 shadow-[0_0_50px_rgba(37,99,235,0.15)]">
@@ -98,9 +99,9 @@ const App: React.FC = () => {
           </div>
           
           <div className="space-y-4">
-            <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic">Clearance Restricted</h1>
+            <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic">Clearance Required</h1>
             <p className="text-slate-400 text-sm leading-relaxed max-w-sm mx-auto font-medium">
-              Sentinel-Sync's intelligence node is currently disconnected. Manual cryptographic link to Gemini backbone is required.
+              Sentinel-Sync's intelligence node is currently restricted. Please link your Gemini API credentials to proceed.
             </p>
           </div>
 
@@ -114,7 +115,7 @@ const App: React.FC = () => {
             </button>
             <div className="pt-4 border-t border-slate-800/50">
               <p className="text-[10px] text-slate-500 leading-relaxed font-medium">
-                Authorization happens via a secure bridge.
+                Authorization is handled via a secure bridge.
                 <br />
                 <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-blue-400 font-bold hover:text-blue-300 underline underline-offset-4 transition-colors">Review Billing Docs</a>
               </p>
@@ -143,7 +144,7 @@ const App: React.FC = () => {
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 animate-in fade-in slide-in-from-bottom-5">
                <div className="w-20 h-20 bg-slate-900/50 rounded-3xl flex items-center justify-center mb-6 border border-slate-800 text-3xl shadow-xl">⚙️</div>
                <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-tighter italic">System Node Config</h2>
-               <p className="text-sm text-slate-400 max-w-md font-medium">Manage API bridges, webhook listeners, and intelligence authorization.</p>
+               <p className="text-sm text-slate-400 max-w-md font-medium">Manage API bridges and webhook listeners.</p>
                <button 
                  onClick={handleAuthorize}
                  className="mt-10 px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all border border-slate-700 shadow-xl active:scale-95"
