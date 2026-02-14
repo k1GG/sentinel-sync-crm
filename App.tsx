@@ -12,6 +12,7 @@ import VoicePulse from './components/VoicePulse';
 import FloatingAIChat from './components/FloatingAIChat';
 import { MOCK_CLIENTS } from './constants';
 import { Client } from './types';
+import Header from './components/Header.tsx'
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
